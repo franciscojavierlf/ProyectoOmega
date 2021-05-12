@@ -56,9 +56,11 @@ public class Dashboard extends javax.swing.JFrame {
     for (String id : directory.keySet()) {
       request = directory.get(id);
       opposite = request.getOpposite(user);
-      text += opposite.name + " (" + opposite.id + ") [" +
-              (request.state == MessageRequest.State.PENDING ? "Pendiente" + (!request.sender.equals(user) ? " (para ti)" : "")
-              : request.state == MessageRequest.State.ACCEPTED ? "Aceptada" : "Rechazada") + (!request.sender.equals(user) ? " por ti" : "") + "]\n";
+      text += opposite.name + " (" + opposite.id + ") [";
+      if (request.state == MessageRequest.State.PENDING)
+        text += "Pendiente" + (!request.sender.equals(user) ? " (para ti)" : "");
+      else
+        text += (request.state == MessageRequest.State.ACCEPTED ? "Aceptada" : "Rechazada") + (!request.sender.equals(user) ? " por ti" : "") + "]\n";
       
     }
     requestsArea.setText(text);
