@@ -35,3 +35,7 @@ CREATE TABLE DIRECTORY
   STATE VARCHAR(10) NOT NULL
 );
 
+
+-- Agrega datos
+INSERT INTO USERS (ID, NAME) VALUES ('frank', 'Francisco Lopez');
+INSERT INTO USERS (ID, NAME) VALUES ('javier', 'Javier Lopez');

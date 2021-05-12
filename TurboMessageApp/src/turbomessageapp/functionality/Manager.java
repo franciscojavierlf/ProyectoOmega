@@ -52,7 +52,8 @@ public final class Manager {
     // Crea un request y lo agrega a la bd
     Message request = bloc.addRequest(sender, receiverId);
     // Y se transmite el mensaje para el usuario
-    transmitter.sendMessage(request);
+    if (request != null)
+      transmitter.sendMessage(request);
     return new MessageRequest(request.sender, request.receiver, MessageRequest.State.PENDING);
   }
   
@@ -80,8 +81,9 @@ public final class Manager {
    * @return 
    */
   public MessageRequest acceptRequest(String senderId, String receiverId) {
-    if (bloc.requestExists(senderId, receiverId)) {
-      Message message = bloc.addAcceptedRequest(senderId, receiverId);
+    MessageRequest check = bloc.getRequest(senderId, receiverId);
+    if (check != null && (check.state == MessageRequest.State.PENDING)) {
+      Message message = bloc.acceptRequest(senderId, receiverId);
       transmitter.sendMessage(message);
       return new MessageRequest(message.sender, message.receiver, MessageRequest.State.ACCEPTED);
     }
@@ -95,8 +97,9 @@ public final class Manager {
    * @return 
    */
   public MessageRequest denyRequest(String senderId, String receiverId) {
-    if (bloc.requestExists(senderId, receiverId)) {
-      Message message = bloc.addDeniedRequest(senderId, receiverId);
+    MessageRequest check = bloc.getRequest(senderId, receiverId);
+    if (check != null && (check.state == MessageRequest.State.PENDING)) {
+      Message message = bloc.denyRequest(senderId, receiverId);
       transmitter.sendMessage(message);
       return new MessageRequest(message.sender, message.receiver, MessageRequest.State.DENIED);
     }
@@ -117,7 +120,8 @@ public final class Manager {
       return null;
     }
     Message message = bloc.addTextMessage(sender, receiverId, body);
-    transmitter.sendMessage(message);
+    if (message != null)
+      transmitter.sendMessage(message);
     return message;
   }
   
@@ -130,7 +134,8 @@ public final class Manager {
   public Message updateMessageState(Message message, Message.State newState) {
     // Lo actualiza en la base de datos y luego avisa al usuario
     Message update = bloc.updateMessageState(message, newState);
-    transmitter.sendMessage(update);
+    if (update != null)
+      transmitter.sendMessage(update);
     return update;
   }
   

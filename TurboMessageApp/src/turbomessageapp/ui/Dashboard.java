@@ -56,8 +56,9 @@ public class Dashboard extends javax.swing.JFrame {
     for (String id : directory.keySet()) {
       request = directory.get(id);
       opposite = request.getOpposite(user);
-      text += opposite.name + " (" + opposite.id + ") [" + (request.state == MessageRequest.State.PENDING ? "Pendiente"
-              : request.state == MessageRequest.State.ACCEPTED ? "Aceptada" : "Rechazada") + "]\n";
+      text += opposite.name + " (" + opposite.id + ") [" +
+              (request.state == MessageRequest.State.PENDING ? "Pendiente" + (!request.sender.equals(user) ? " (para ti)" : "")
+              : request.state == MessageRequest.State.ACCEPTED ? "Aceptada" : "Rechazada") + (!request.sender.equals(user) ? " por ti" : "") + "]\n";
       
     }
     requestsArea.setText(text);
@@ -162,7 +163,7 @@ public class Dashboard extends javax.swing.JFrame {
       }
     });
 
-    jButton4.setText("Cancelar");
+    jButton4.setText("Rechazar");
     jButton4.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         jButton4ActionPerformed(evt);
@@ -211,7 +212,7 @@ public class Dashboard extends javax.swing.JFrame {
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(jButton4))
                   .addComponent(jLabel4))
-                .addGap(0, 25, Short.MAX_VALUE)))))
+                .addGap(0, 20, Short.MAX_VALUE)))))
         .addContainerGap())
     );
     layout.setVerticalGroup(
@@ -266,13 +267,15 @@ public class Dashboard extends javax.swing.JFrame {
   private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
     // Acepta una solicitud
     String contactId = userMessageField.getText();
-    directory.put(contactId,manager.acceptRequest(contactId, user.id));
+    directory.put(contactId, manager.acceptRequest(contactId, user.id));
+    printDirectory();
   }//GEN-LAST:event_jButton3ActionPerformed
 
   private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
     // Rechaza solicitud
     String contactId = userMessageField.getText();
     directory.put(contactId,manager.denyRequest(contactId, user.id));
+    printDirectory();
   }//GEN-LAST:event_jButton4ActionPerformed
 
 
@@ -316,13 +319,13 @@ public class Dashboard extends javax.swing.JFrame {
 
     @Override
     public void onRequestAccepted(Message message) {
-      directory.get(message.sender).state = MessageRequest.State.ACCEPTED;
+      directory.get(message.sender.id).state = MessageRequest.State.ACCEPTED;
       printDirectory();
     }
 
     @Override
     public void onRequestDenied(Message message) {
-      directory.get(message.sender).state = MessageRequest.State.DENIED;
+      directory.get(message.sender.id).state = MessageRequest.State.DENIED;
       printDirectory();
     }
 

@@ -257,7 +257,6 @@ public class Bloc {
     // Agrega el mensaje
     int id = (int) System.currentTimeMillis();
     User receiver = getUser(receiverId);
-    System.out.println(receiver);
     Message res = new Message(id, sender, receiver, Message.Type.REQUEST);
     
     // Luego escribe en directorio
@@ -272,13 +271,13 @@ public class Bloc {
    * @param receiverId
    * @return 
    */
-  public Message addAcceptedRequest(String senderId, String receiverId) {
+  public Message acceptRequest(String senderId, String receiverId) {
     
     // Agrega el mensaje de aceptado
     int id = (int) System.currentTimeMillis();
     User sender = getUser(senderId);
     User receiver = getUser(receiverId);
-    Message res = new Message(id, sender, receiver, Message.Type.REQUEST_ACCEPTED);
+    Message res = new Message(id, receiver, sender, Message.Type.REQUEST_ACCEPTED);
     
     // Y luego se actualiza en el directorio
     updateDirectory(sender, receiver, MessageRequest.State.ACCEPTED);
@@ -292,13 +291,13 @@ public class Bloc {
    * @param receiverId
    * @return 
    */
-  public Message addDeniedRequest(String senderId, String receiverId) {
+  public Message denyRequest(String senderId, String receiverId) {
     
     // Agrega el mensaje de no aceptado
     int id = (int) System.currentTimeMillis();
     User sender = getUser(senderId);
     User receiver = getUser(receiverId);
-    Message res = new Message(id, sender, receiver, Message.Type.REQUEST_DENIED);
+    Message res = new Message(id, receiver, sender, Message.Type.REQUEST_DENIED);
     
     // Y luego se actualiza en el directorio
     updateDirectory(sender, receiver, MessageRequest.State.DENIED);    
