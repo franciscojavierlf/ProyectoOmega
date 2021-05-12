@@ -64,7 +64,6 @@ public final class Manager {
    */
   public boolean canCommunicate(String userId1, String userId2) {
     MessageRequest request = bloc.getRequest(userId1, userId2);
-    System.out.println(request.state);
     if (request != null && request.state == MessageRequest.State.ACCEPTED)
       return true;
     request = bloc.getRequest(userId2, userId1);
@@ -118,7 +117,6 @@ public final class Manager {
       return null;
     }
     Message message = bloc.addTextMessage(sender, receiverId, body);
-    System.out.println("MMMMMMMMMMMMMMM " + message);
     transmitter.sendMessage(message);
     return message;
   }
@@ -154,17 +152,14 @@ public final class Manager {
 
     @Override
     public void onRequestReceived(Message message) {
-      manager.updateMessageState(message, Message.State.DELIVERED);
     }
 
     @Override
     public void onRequestAccepted(Message message) {
-      manager.updateMessageState(message, Message.State.DELIVERED);
     }
 
     @Override
     public void onRequestDenied(Message message) {
-      manager.updateMessageState(message, Message.State.DELIVERED);
     }
 
     @Override

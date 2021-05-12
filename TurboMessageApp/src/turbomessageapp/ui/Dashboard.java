@@ -83,7 +83,7 @@ public class Dashboard extends javax.swing.JFrame {
                m.type == Message.Type.REQUEST ? "Solicitud " :
                m.type == Message.Type.REQUEST_ACCEPTED ? "Solicitud aceptada " :
                "Solicitud rechazada ") + pronoun + opposite.name;
-      if (!m.sender.equals(user))
+      if (m.sender.equals(user))
         text += " [" + (m.state == Message.State.DELIVERED ? "D" : m.state == Message.State.READ ? "R" : "S") + "]";
       text += ": " + m.body + "\n";
     }
@@ -251,7 +251,8 @@ public class Dashboard extends javax.swing.JFrame {
 
   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
     // Manda mensaje
-    messages.add(manager.sendTextMessage(user, userMessageField.getText(), messageField.getText()));
+    Message m = manager.sendTextMessage(user, userMessageField.getText(), messageField.getText());
+    messages.add(m);
     printMessages();
   }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -303,6 +304,8 @@ public class Dashboard extends javax.swing.JFrame {
     public void onTextReceived(Message message) {
       messages.add(message);
       printMessages();
+      // Avisa al usuario que leimos su mensaje
+      manager.updateMessageState(message, Message.State.READ);
     }
 
     @Override
