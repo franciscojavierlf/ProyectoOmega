@@ -259,7 +259,6 @@ public class Bloc {
     User receiver = getUser(receiverId);
     System.out.println(receiver);
     Message res = new Message(id, sender, receiver, Message.Type.REQUEST);
-    addMessage(res);
     
     // Luego escribe en directorio
     addToDirectory(sender, receiver, MessageRequest.State.PENDING);
@@ -280,7 +279,6 @@ public class Bloc {
     User sender = getUser(senderId);
     User receiver = getUser(receiverId);
     Message res = new Message(id, sender, receiver, Message.Type.REQUEST_ACCEPTED);
-    addMessage(res);
     
     // Y luego se actualiza en el directorio
     updateDirectory(sender, receiver, MessageRequest.State.ACCEPTED);
@@ -301,7 +299,6 @@ public class Bloc {
     User sender = getUser(senderId);
     User receiver = getUser(receiverId);
     Message res = new Message(id, sender, receiver, Message.Type.REQUEST_DENIED);
-    addMessage(res);
     
     // Y luego se actualiza en el directorio
     updateDirectory(sender, receiver, MessageRequest.State.DENIED);    
@@ -389,7 +386,8 @@ public class Bloc {
     } catch (SQLException ex) {
       System.out.println(ex);
     }
-    return message;
+    
+    return new Message(message.id, message.receiver, message.sender, Message.Type.STATE_UPDATE, message.id + "", newState);
   }
   
   /**

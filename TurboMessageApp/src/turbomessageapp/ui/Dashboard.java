@@ -23,6 +23,7 @@ public class Dashboard extends javax.swing.JFrame {
   private final Manager manager;
   private final User user;
   
+  public ArrayList<Message> messages;
   private HashMap<String, MessageRequest> directory;
 
   /**
@@ -30,38 +31,32 @@ public class Dashboard extends javax.swing.JFrame {
    */
   public Dashboard(User user) {
     initComponents();
+    setLocationRelativeTo(null);
     this.user = user;
     // Pone el nombre
-    nameLabel.setText("Hola, " + user.name);
+    nameLabel.setText("Hola, " + user.name + " (" + user.id + ")");
     // Comienza a escuchar para nuevos mensajes
     manager = new Manager(user);
-    manager.addMessageListener(new DashboardMessageListener(this));
+    manager.addMessageListener(new DashboardMessageListener());
     
-    // Carga todo
-    loadDirectory();
-    loadMessages();
-  }
-  
-  /**
-   * Agreaga un mensaje al display.
-   * @param message 
-   */
-  public void addMessage(Message message) {
-    String text = messagesArea.getText();
-    text += "De " + message.sender.name + ": " + message.body + "\n";
-    messagesArea.setText(text);
-  }
-  
-  /**
-   * Descarga el directorio.
-   */
-  private void loadDirectory() {
+    // Descarga los mensajes de las conversaciones
+    messages = manager.bloc.getMessages(user);
+    printMessages();
     directory = manager.bloc.getUserDirectory(user);
+    printDirectory();
+  }
+    
+  /**
+   * Imprime el directorio.
+   */
+  private void printDirectory() {
     String text = "";
     MessageRequest request;
+    User opposite;
     for (String id : directory.keySet()) {
       request = directory.get(id);
-      text += request.getOpposite(user).name + " [" + (request.state == MessageRequest.State.PENDING ? "Pendiente"
+      opposite = request.getOpposite(user);
+      text += opposite.name + " (" + opposite.id + ") [" + (request.state == MessageRequest.State.PENDING ? "Pendiente"
               : request.state == MessageRequest.State.ACCEPTED ? "Aceptada" : "Rechazada") + "]\n";
       
     }
@@ -71,17 +66,26 @@ public class Dashboard extends javax.swing.JFrame {
   /**
    * Descarga todos los mensajes.
    */
-  private void loadMessages() {
-    // Descarga los mensajes de las conversaciones
-    ArrayList<Message> messages = manager.bloc.getMessages(user);
+  private void printMessages() {
     // E imprime
     String text = "";
-    for (Message m : messages) {
+    String pronoun;
+    Message m;
+    User opposite;
+    for (int i = messages.size() - 1; i >= 0; i--) {
+      m = messages.get(i);
+      // Brinca los updates de estado
       if (m.type == Message.Type.STATE_UPDATE) continue;
-      text += (m.type == Message.Type.TEXT ? "Mensaje de " :
-              m.sender.equals(user) ? "Solicitud para " : "Solicitud de ")
-            + m.sender.name + ": " + m.body + " ["
-        + (m.state == Message.State.DELIVERED ? "D" : m.state == Message.State.READ ? "R" : "S") + "]\n";
+      // Elige el texto correcto
+      opposite = m.getOpposite(user);
+      pronoun = m.sender.equals(user) ? "para " : "de ";
+      text += (m.type == Message.Type.TEXT ? "Mensaje " :
+               m.type == Message.Type.REQUEST ? "Solicitud " :
+               m.type == Message.Type.REQUEST_ACCEPTED ? "Solicitud aceptada " :
+               "Solicitud rechazada ") + pronoun + opposite.name;
+      if (!m.sender.equals(user))
+        text += " [" + (m.state == Message.State.DELIVERED ? "D" : m.state == Message.State.READ ? "R" : "S") + "]";
+      text += ": " + m.body + "\n";
     }
     messagesArea.setText(text);
     
@@ -110,6 +114,8 @@ public class Dashboard extends javax.swing.JFrame {
     jButton2 = new javax.swing.JButton();
     jButton3 = new javax.swing.JButton();
     jButton4 = new javax.swing.JButton();
+    jLabel3 = new javax.swing.JLabel();
+    jLabel4 = new javax.swing.JLabel();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -163,42 +169,50 @@ public class Dashboard extends javax.swing.JFrame {
       }
     });
 
+    jLabel3.setText("Usuario");
+
+    jLabel4.setText("Mensaje");
+
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(layout.createSequentialGroup()
-        .addGap(31, 31, 31)
-        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 508, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addGap(18, 18, 18)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addComponent(jScrollPane2)
-          .addGroup(layout.createSequentialGroup()
-            .addComponent(userMessageField, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jButton1)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jButton2)
-            .addGap(18, 18, 18)
-            .addComponent(jButton3)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jButton4)
-            .addGap(0, 25, Short.MAX_VALUE))
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addGap(0, 0, Short.MAX_VALUE)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 560, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGap(30, 30, 30)))
-        .addContainerGap())
       .addGroup(layout.createSequentialGroup()
         .addGap(234, 234, 234)
         .addComponent(jLabel1)
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         .addComponent(jLabel2)
         .addGap(267, 267, 267))
-      .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(nameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 393, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addGap(401, 401, 401))
+      .addGroup(layout.createSequentialGroup()
+        .addGap(31, 31, 31)
+        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+          .addComponent(nameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+          .addGroup(layout.createSequentialGroup()
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 508, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(18, 18, 18)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(jScrollPane2)
+              .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 560, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30))
+              .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                  .addGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                      .addComponent(userMessageField, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
+                      .addComponent(jLabel3))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jButton1)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jButton2)
+                    .addGap(18, 18, 18)
+                    .addComponent(jButton3)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jButton4))
+                  .addComponent(jLabel4))
+                .addGap(0, 25, Short.MAX_VALUE)))))
+        .addContainerGap())
     );
     layout.setVerticalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -206,24 +220,30 @@ public class Dashboard extends javax.swing.JFrame {
         .addGap(31, 31, 31)
         .addComponent(nameLabel)
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(jLabel1)
+        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+          .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING)
           .addComponent(jLabel2))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+          .addGroup(layout.createSequentialGroup()
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 589, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(33, Short.MAX_VALUE))
           .addGroup(layout.createSequentialGroup()
             .addComponent(jScrollPane3)
-            .addGap(50, 50, 50)
+            .addGap(18, 18, 18)
+            .addComponent(jLabel3)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
               .addComponent(userMessageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
               .addComponent(jButton1)
               .addComponent(jButton2)
               .addComponent(jButton3)
               .addComponent(jButton4))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-          .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 589, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addContainerGap(33, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jLabel4)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(27, 27, 27))))
     );
 
     pack();
@@ -231,22 +251,27 @@ public class Dashboard extends javax.swing.JFrame {
 
   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
     // Manda mensaje
-    manager.sendTextMessage(user, userMessageField.getText(), messageField.getText());
+    messages.add(manager.sendTextMessage(user, userMessageField.getText(), messageField.getText()));
+    printMessages();
   }//GEN-LAST:event_jButton1ActionPerformed
 
   private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
     // Pide solicitud
-    manager.sendRequest(user, userMessageField.getText());
+    String contactId = userMessageField.getText();
+    directory.put(contactId, manager.sendRequest(user, contactId));
+    printDirectory();
   }//GEN-LAST:event_jButton2ActionPerformed
 
   private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
     // Acepta una solicitud
-    manager.acceptRequest(userMessageField.getText(), user.id);
+    String contactId = userMessageField.getText();
+    directory.put(contactId,manager.acceptRequest(contactId, user.id));
   }//GEN-LAST:event_jButton3ActionPerformed
 
   private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
     // Rechaza solicitud
-    manager.denyRequest(userMessageField.getText(), user.id);
+    String contactId = userMessageField.getText();
+    directory.put(contactId,manager.denyRequest(contactId, user.id));
   }//GEN-LAST:event_jButton4ActionPerformed
 
 
@@ -257,6 +282,8 @@ public class Dashboard extends javax.swing.JFrame {
   private javax.swing.JButton jButton4;
   private javax.swing.JLabel jLabel1;
   private javax.swing.JLabel jLabel2;
+  private javax.swing.JLabel jLabel3;
+  private javax.swing.JLabel jLabel4;
   private javax.swing.JScrollPane jScrollPane1;
   private javax.swing.JScrollPane jScrollPane2;
   private javax.swing.JScrollPane jScrollPane3;
@@ -272,31 +299,39 @@ public class Dashboard extends javax.swing.JFrame {
    */
   private class DashboardMessageListener implements MessageListener {
 
-    private final Dashboard dashboard;
-    
-    public DashboardMessageListener(Dashboard dashboard) {
-      this.dashboard = dashboard;
-    }
-    
     @Override
     public void onTextReceived(Message message) {
-      dashboard.addMessage(message);
+      messages.add(message);
+      printMessages();
     }
 
     @Override
     public void onRequestReceived(Message message) {
+      directory.put(message.sender.id, new MessageRequest(message.sender, message.receiver, MessageRequest.State.PENDING));
+      printDirectory();
     }
 
     @Override
     public void onRequestAccepted(Message message) {
+      directory.get(message.sender).state = MessageRequest.State.ACCEPTED;
+      printDirectory();
     }
 
     @Override
     public void onRequestDenied(Message message) {
+      directory.get(message.sender).state = MessageRequest.State.DENIED;
+      printDirectory();
     }
 
     @Override
     public void onStateUpdated(Message message) {
+      // Consigue el mensaje y lo intercambia
+      int i = messages.indexOf(message);
+      if (i >= 0) {
+        Message m = messages.get(i);
+        m.state = message.state;
+        printMessages();
+      }
     }
     
   }

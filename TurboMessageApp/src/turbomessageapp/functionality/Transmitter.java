@@ -52,6 +52,10 @@ public final class Transmitter extends Thread {
    * @throws JMSException 
    */
   public boolean sendMessage(Message message) {
+    if (!message.sender.equals(user)) {
+      System.out.println("No puedes enviar mensajes que no provengan de ti!");
+      return false;
+    }
     try {
       // Comienza la conexion
       ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(ActiveMQConnection.DEFAULT_BROKER_URL);
@@ -66,7 +70,7 @@ public final class Transmitter extends Thread {
       ObjectMessage object = session.createObjectMessage();
 
       // Manda el mensaje
-      System.out.println("Enviando mensaje...");
+      System.out.println("Enviando mensaje " + message);
       object.setObject(message);
       producer.send(object);
       System.out.println("Enviado.");
@@ -105,6 +109,8 @@ public final class Transmitter extends Thread {
       object = (ObjectMessage) consumer.receive();
       message = (Message) object.getObject();
       
+      System.out.println("Mensaje recibido: " + message);
+      
       // Avisa a los listeners
       switch (message.type) {
         case REQUEST:
@@ -128,8 +134,6 @@ public final class Transmitter extends Thread {
             l.onStateUpdated(message);
           break;
       }
-      
-      object.setJMSExpiration(0l);
     }
   }
   

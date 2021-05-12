@@ -14,7 +14,7 @@ import turbomessageapp.logic.MessageRequest;
 import turbomessageapp.logic.User;
 
 /**
- * Administrador de mensajes.
+ * Administrador de mensajes. Trambien controla la logica de envio y recibo.
  * @author franciscojavierlf
  */
 public final class Manager {
@@ -45,13 +45,34 @@ public final class Manager {
    * @param body
    * @return 
    */
-  public Message sendRequest(User sender, String receiverId) {
+  public MessageRequest sendRequest(User sender, String receiverId) {
+    // No envia solicitud si ya existe para cualquier lado
+    if (bloc.requestExists(sender.id, receiverId) || bloc.requestExists(receiverId, sender.id))
+      return null;
     // Crea un request y lo agrega a la bd
     Message request = bloc.addRequest(sender, receiverId);
     // Y se transmite el mensaje para el usuario
     transmitter.sendMessage(request);
-    return request;
+    return new MessageRequest(request.sender, request.receiver, MessageRequest.State.PENDING);
   }
+  
+  /**
+   * Checa si dos usuarios pueden comunicarse entre si (si estan en el directorio).
+   * @param userId1
+   * @param userId2
+   * @return 
+   */
+  public boolean canCommunicate(String userId1, String userId2) {
+    MessageRequest request = bloc.getRequest(userId1, userId2);
+    System.out.println(request.state);
+    if (request != null && request.state == MessageRequest.State.ACCEPTED)
+      return true;
+    request = bloc.getRequest(userId2, userId1);
+    if (request != null && request.state == MessageRequest.State.ACCEPTED)
+       return true;
+    return false;
+  }
+  
   
   /**
    * Acepta una solicitud.
@@ -59,11 +80,11 @@ public final class Manager {
    * @param receiverId
    * @return 
    */
-  public Message acceptRequest(String senderId, String receiverId) {
+  public MessageRequest acceptRequest(String senderId, String receiverId) {
     if (bloc.requestExists(senderId, receiverId)) {
       Message message = bloc.addAcceptedRequest(senderId, receiverId);
       transmitter.sendMessage(message);
-      return message;
+      return new MessageRequest(message.sender, message.receiver, MessageRequest.State.ACCEPTED);
     }
     return null;
   }
@@ -74,11 +95,11 @@ public final class Manager {
    * @param receiverId
    * @return 
    */
-  public Message denyRequest(String senderId, String receiverId) {
+  public MessageRequest denyRequest(String senderId, String receiverId) {
     if (bloc.requestExists(senderId, receiverId)) {
       Message message = bloc.addDeniedRequest(senderId, receiverId);
       transmitter.sendMessage(message);
-      return message;
+      return new MessageRequest(message.sender, message.receiver, MessageRequest.State.DENIED);
     }
     return null;
   }
@@ -91,7 +112,13 @@ public final class Manager {
    * @return 
    */
   public Message sendTextMessage(User sender, String receiverId, String body) {
+    
+    if (!canCommunicate(sender.id, receiverId)) {
+      System.out.println(sender.id + " y " + receiverId + " no se pueden comunicar!");
+      return null;
+    }
     Message message = bloc.addTextMessage(sender, receiverId, body);
+    System.out.println("MMMMMMMMMMMMMMM " + message);
     transmitter.sendMessage(message);
     return message;
   }

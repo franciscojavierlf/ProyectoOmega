@@ -18,6 +18,7 @@ public class Landing extends javax.swing.JFrame {
    */
   public Landing() {
     initComponents();
+    setLocationRelativeTo(null);
   }
 
   /**
