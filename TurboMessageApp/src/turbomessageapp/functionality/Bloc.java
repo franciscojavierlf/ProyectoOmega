@@ -7,6 +7,7 @@ package turbomessageapp.functionality;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -364,11 +365,8 @@ public class Bloc {
     if (!canCommunicate(sender.id, receiverId))
       return null;
     
-    int id = (int) System.currentTimeMillis();
     User receiver = getUser(receiverId);
-    Message res = new Message(id, sender, receiver, Message.Type.TEXT, body, Message.State.SENT);
-    addMessage(res);
-    return res;
+    return addMessage(sender, receiver, Message.Type.TEXT, body);
   }
   
   /**
@@ -393,15 +391,33 @@ public class Bloc {
    * Funcion generica para agregar nuevos mensajes.
    * @param message 
    */
-  private void addMessage(Message message) {
+  private Message addMessage(User sender, User receiver, Message.Type type, String body) {
+    
+    Message.State state = Message.State.SENT;
     
     try {
-      statement = connection.createStatement();
-      statement.execute("INSERT INTO MESSAGES (SENDER_ID, RECEIVER_ID, TYPE, BODY, STATE) VALUES ('"
-        + message.sender.id + "', '" + message.receiver.id + "', '" + message.type.toString() + "', '" + message.body + "', '" + message.state.toString() + "')");
-      statement.close();
+      //String query = "INSERT INTO MESSAGES (SENDER_ID, RECEIVER_ID, TYPE, BODY, STATE) VALUES ('"
+      //  + sender.id + "', '" + receiver.id + "', '" + type.toString() + "', '" + body + "', '" + state.toString() + "')";
+      String query = "INSERT INTO MESSAGES (SENDER_ID, RECEIVER_ID, TYPE, BODY, STATE) VALUES (?, ?, ?, ?, ?)";
+      PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+      statement.setString(1, sender.id);
+      statement.setString(2, receiver.id);
+      statement.setString(3, type.toString());
+      statement.setString(4, body);
+      statement.setString(5, state.toString());
+      
+      statement.execute();
+      
+      ResultSet result = statement.getGeneratedKeys();
+      
+      if (result.next()) {
+        int id = result.getInt(1);
+        statement.close();
+        return new Message(id, sender, receiver, type, body, state);
+      }
     } catch (SQLException ex) {
       System.out.println(ex);
     }
+    return null;
   }
 }

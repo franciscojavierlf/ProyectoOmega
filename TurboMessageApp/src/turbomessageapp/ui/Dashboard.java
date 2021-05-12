@@ -307,8 +307,11 @@ public class Dashboard extends javax.swing.JFrame {
 
     @Override
     public void onTextReceived(Message message) {
-      messages.add(message);
-      printMessages();
+      // Checa si ya tenemos el mensaje (cuando se quedan atorados en la cola)
+      if (!messages.contains(message)) {
+        messages.add(message);
+        printMessages();
+      }
       // Avisa al usuario que leimos su mensaje
       manager.updateMessageState(message, Message.State.READ);
     }
